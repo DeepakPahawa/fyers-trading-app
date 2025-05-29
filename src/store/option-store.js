@@ -40,6 +40,7 @@ const useOptionStore = create((set, get) => ({
   },
   enhancedOptions: [],
   atmPriceDetails: null, // Details of the ATM option
+  atmIndex: null,
   tradingOpportunities: {
     callOpportunities: [],
     putOpportunities: [],
@@ -280,6 +281,11 @@ const useOptionStore = create((set, get) => ({
           //   sortedEnhancedOptions
           // );
           // Identify trading opportunities
+
+          const atmIndex = sortedEnhancedOptions.findIndex(
+            (option) => option.strikePrice === atmPriceDetails.strikePrice
+          );
+
           const opportunities = identifyTradingOpportunities(
             sortedEnhancedOptions
           );
@@ -287,7 +293,8 @@ const useOptionStore = create((set, get) => ({
           set({
             enhancedOptions: sortedEnhancedOptions,
             tradingOpportunities: opportunities,
-            atmPriceDetails: atmPriceDetails
+            atmPriceDetails: atmPriceDetails,
+            atmIndex
           });
         }
 

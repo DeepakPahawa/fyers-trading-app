@@ -117,7 +117,7 @@ const RecordDataPage = () => {
         option.value,
         expiryDate
       );
-      const { underlying, selectedExpiry, volatilityData, atmPriceDetails } = await
+      const { underlying, selectedExpiry, volatilityData, atmPriceDetails, atmIndex, enhancedOptions } = await
         useOptionStore.getState();
       const { parityDeviation, deviationPercentage } = calculateParityDeviation(
         atmPriceDetails.call.ltp,
@@ -168,7 +168,7 @@ const RecordDataPage = () => {
           setCurrentIndex((prev) =>
             prev === availableOptions.length - 1 ? 0 : prev + 1
           );
-        }, 10 * 1000);
+        }, 18 * 1000);
       }
     }
     console.log('🚀 ~ useEffect ~ isRecording:', isRecording);

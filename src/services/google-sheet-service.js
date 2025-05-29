@@ -16,6 +16,7 @@ export async function updateGoogleSheet(option, data) {
 
   const body = {
     values: rows,
+    indexName: option.label, // Use the option label as the index name
   };
 
   try {
