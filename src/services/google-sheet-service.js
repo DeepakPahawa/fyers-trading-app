@@ -12,7 +12,8 @@ export async function updateGoogleSheet(option, data) {
   const now = new Date();
   const date = now.toISOString().split('T')[0]; // "YYYY-MM-DD"
   const time = now.toTimeString().split(' ')[0]; // "HH:MM:SS"
-  const rows = [[option.label, date, time, ...data]];
+  const rows = data.map((item, index) => [option.label, date, time, ...item, index + 1]);
+  // console.log("🚀 ~ updateGoogleSheet ~ rows:", rows)
 
   const body = {
     values: rows,
