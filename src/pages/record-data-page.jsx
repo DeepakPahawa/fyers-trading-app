@@ -315,6 +315,26 @@ const RecordDataPage = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
 
+  // Helper to get strike prices around atmIndex using atmIndex from store
+  const getStrikeCharts = () => {
+    const symbolOiData = oiData['NSE:NIFTY50-INDEX'] || {};
+    // Find all available strikes and sort numerically
+    const strikes = Object.keys(symbolOiData).map(Number).sort((a, b) => a - b);
+    const { atmIndex, enhancedOptions } = useOptionStore.getState();
+    if (atmIndex == null || !enhancedOptions || !enhancedOptions.length) return null;
+    // Get the atm strike from enhancedOptions
+    const atmStrike = enhancedOptions[atmIndex]?.strikePrice;
+    if (atmStrike == null) return null;
+    // Find the indices in the strikes array
+    const atmIdxInStrikes = strikes.indexOf(Number(atmStrike));
+    const indices = [atmIdxInStrikes - 2, atmIdxInStrikes - 1, atmIdxInStrikes, atmIdxInStrikes + 1, atmIdxInStrikes + 2];
+    const charts = indices.map(idx => strikes[idx]).map((strike, i) => strike && symbolOiData[strike] ? { strike, data: symbolOiData[strike], pos: i - 2 } : null);
+    // charts: [atm-2, atm-1, atm, atm+1, atm+2] with pos: -2, -1, 0, 1, 2
+    return charts;
+  };
+
+  const strikeCharts = getStrikeCharts();
+
   return (
     <div style={{ padding: 24 }}>
       <h2>Record Data</h2>
@@ -337,45 +357,65 @@ const RecordDataPage = () => {
           <span>Paused</span>
         )}
       </div>
-      <div
-        style={{
-          display: 'flex',
-          direction: 'row',
-          justifyContent: 'space-between',
-          gap: 16,
-          marginTop: 24,
-          maxHeight: '600px',
-        }}
-      >
-        {oiData['NSE:NIFTY50-INDEX'] && (
-          <>
+      <div style={{ marginTop: 24 }}>
+        {strikeCharts && strikeCharts[2] && (
+          <div style={{ width: '100%', marginBottom: 24 }}>
             <ChartComponent
-              strike={24800}
-              dataForStrike={oiData['NSE:NIFTY50-INDEX'][24800]}
+              strike={strikeCharts[2].strike}
+              dataForStrike={strikeCharts[2].data}
+              fullWidth
             />
-            <ChartComponent
-              strike={24750}
-              dataForStrike={oiData['NSE:NIFTY50-INDEX'][24750]}
-            />
-          </>
+          </div>
         )}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
+          {strikeCharts && strikeCharts[1] && (
+            <div style={{ width: '50%' }}>
+              <ChartComponent
+                strike={strikeCharts[1].strike}
+                dataForStrike={strikeCharts[1].data}
+              />
+            </div>
+          )}
+          {strikeCharts && strikeCharts[3] && (
+            <div style={{ width: '50%' }}>
+              <ChartComponent
+                strike={strikeCharts[3].strike}
+                dataForStrike={strikeCharts[3].data}
+              />
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 16 }}>
+          {strikeCharts && strikeCharts[0] && (
+            <div style={{ width: '50%' }}>
+              <ChartComponent
+                strike={strikeCharts[0].strike}
+                dataForStrike={strikeCharts[0].data}
+              />
+            </div>
+          )}
+          {strikeCharts && strikeCharts[4] && (
+            <div style={{ width: '50%' }}>
+              <ChartComponent
+                strike={strikeCharts[4].strike}
+                dataForStrike={strikeCharts[4].data}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-const ChartComponent = ({ strike = 24800, dataForStrike }) => {
+const ChartComponent = ({ strike = 24800, dataForStrike, fullWidth }) => {
   const canvasRef = useRef(null);
   useEffect(() => {
+    if (!dataForStrike) return;
     const ctx = canvasRef.current.getContext('2d');
     const labels = Object.keys(dataForStrike);
-    console.log('🚀 ~ useEffect ~ dataForStrike:', dataForStrike);
     const callOiData = labels.map((time) => dataForStrike[time].callOi);
     const putOiData = labels.map((time) => dataForStrike[time].putOi);
-    // const priceData = labels.map((time) => dataForStrike[time].currentPrice);
-    console.log('🚀 ~ useEffect ~ callOiData:', callOiData);
-
-    console.log('🚀 ~ useEffect ~ putOiData:', putOiData);
     const chartInstance = new Chart(ctx, {
       type: 'line',
       data: {
@@ -397,14 +437,6 @@ const ChartComponent = ({ strike = 24800, dataForStrike }) => {
             yAxisID: 'y',
             tension: 0.2,
           },
-          // {
-          //   label: 'Current Price',
-          //   data: priceData,
-          //   borderColor: 'rgba(54,162,235,1)',
-          //   backgroundColor: 'rgba(54,162,235,0.2)',
-          //   yAxisID: 'y1',
-          //   tension: 0.2,
-          // },
         ],
       },
       options: {
@@ -424,20 +456,13 @@ const ChartComponent = ({ strike = 24800, dataForStrike }) => {
             position: 'right',
             title: { display: true, text: 'OI' },
           },
-          // y1: {
-          //   type: 'linear',
-          //   display: true,
-          //   position: 'right',
-          //   grid: { drawOnChartArea: false },
-          //   title: { display: true, text: 'Price' },
-          // },
         },
       },
     });
     return () => chartInstance.destroy();
   }, [dataForStrike, strike]);
   return (
-    <div style={{ width: '50%', margin: '0 auto' }}>
+    <div style={{ width: fullWidth ? '100%' : '100%', margin: '0 auto' }}>
       <canvas ref={canvasRef} height={300} />
     </div>
   );

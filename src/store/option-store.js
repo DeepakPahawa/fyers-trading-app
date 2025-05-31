@@ -55,7 +55,7 @@ const useOptionStore = create((set, get) => ({
   selectedOptionType: null,
   selectedRowStrikePrice: null,
   selectedOptionDetail: null,
-  selectedSymbol: availableOptions[1].value, // Default to the first symbol in the list
+  selectedSymbol: availableOptions[0].value, // Default to the first symbol in the list
   selectedExpiry: {
     label: null,
     value: null,

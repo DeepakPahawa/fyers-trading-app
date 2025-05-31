@@ -1,7 +1,7 @@
 export const availableOptions = [
     { label: 'NIFTY', value: 'NSE:NIFTY50-INDEX' },
     { label: 'BankNIFTY', value: 'NSE:NIFTYBANK-INDEX' },
-    { label: 'FinNIFTY', value: 'NSE:FINNIFTY-INDEX' },
+    // { label: 'FinNIFTY', value: 'NSE:FINNIFTY-INDEX' },
     // { label: 'SENSEX', value: 'BSE:SENSEX-INDEX' },
     // // { label: 'NIFTYNXT50', value: 'NSE:NIFTYNXT50-INDEX' },
     // { label: 'BANKEX', value: 'BSE:BANKEX-INDEX' },
