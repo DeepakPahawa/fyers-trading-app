@@ -199,9 +199,9 @@ const expiryDates = {
 };
 
 const RecordDataPage = () => {
-  const { fetchOptionChain } = useOptionStore();
+  const { fetchOptionChain, oiData } = useOptionStore();
+  console.log('🚀 ~ RecordDataPage ~ oiData:', oiData);
   const [isRecording, setIsRecording] = useState(false);
-  console.log('🚀 ~ RecordDataPage ~ isRecording:', isRecording);
   const [currentIndex, setCurrentIndex] = useState(0);
   const timerRef = useRef(null);
 
@@ -337,24 +337,45 @@ const RecordDataPage = () => {
           <span>Paused</span>
         )}
       </div>
-      <div style={{ display: 'flex', direction: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24, maxHeight: '600px' }}>
-        <ChartComponent strike={24800} />
-        <ChartComponent strike={24750} />
+      <div
+        style={{
+          display: 'flex',
+          direction: 'row',
+          justifyContent: 'space-between',
+          gap: 16,
+          marginTop: 24,
+          maxHeight: '600px',
+        }}
+      >
+        {oiData['NSE:NIFTY50-INDEX'] && (
+          <>
+            <ChartComponent
+              strike={24800}
+              dataForStrike={oiData['NSE:NIFTY50-INDEX'][24800]}
+            />
+            <ChartComponent
+              strike={24750}
+              dataForStrike={oiData['NSE:NIFTY50-INDEX'][24750]}
+            />
+          </>
+        )}
       </div>
     </div>
   );
 };
 
-const ChartComponent = ({ strike = 24800 }) => {
+const ChartComponent = ({ strike = 24800, dataForStrike }) => {
   const canvasRef = useRef(null);
   useEffect(() => {
     const ctx = canvasRef.current.getContext('2d');
-    const dataForStrike = chartData[strike];
     const labels = Object.keys(dataForStrike);
+    console.log('🚀 ~ useEffect ~ dataForStrike:', dataForStrike);
     const callOiData = labels.map((time) => dataForStrike[time].callOi);
     const putOiData = labels.map((time) => dataForStrike[time].putOi);
-    const priceData = labels.map((time) => dataForStrike[time].currentPrice);
+    // const priceData = labels.map((time) => dataForStrike[time].currentPrice);
+    console.log('🚀 ~ useEffect ~ callOiData:', callOiData);
 
+    console.log('🚀 ~ useEffect ~ putOiData:', putOiData);
     const chartInstance = new Chart(ctx, {
       type: 'line',
       data: {
@@ -388,7 +409,7 @@ const ChartComponent = ({ strike = 24800 }) => {
       },
       options: {
         responsive: true,
-        interaction: { mode: 'index', intersect: false },
+        interaction: { mode: 'index', intersect: true },
         stacked: false,
         plugins: {
           title: {
@@ -400,7 +421,7 @@ const ChartComponent = ({ strike = 24800 }) => {
           y: {
             type: 'linear',
             display: true,
-            position: 'left',
+            position: 'right',
             title: { display: true, text: 'OI' },
           },
           // y1: {
@@ -414,7 +435,7 @@ const ChartComponent = ({ strike = 24800 }) => {
       },
     });
     return () => chartInstance.destroy();
-  }, [strike]);
+  }, [dataForStrike, strike]);
   return (
     <div style={{ width: '50%', margin: '0 auto' }}>
       <canvas ref={canvasRef} height={300} />

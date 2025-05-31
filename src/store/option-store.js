@@ -18,6 +18,13 @@ import { calibrateHestonModel } from '../utils/optionPricingModels/heston';
 import { calculateVolatilityMetrics } from '../utils/advancedOptionsAnalysis';
 import { calculateOptionCallPutPrice } from '../services/pricingService';
 import { expiryDateTransformer } from '../utils/api.util';
+import { extractChartDataFromEnhancedOptions } from '../utils/oi-analysis';
+
+const initialOiData = {
+  NIFTY: {},
+  BankNIFTY: {},
+  FinNIFTY: {},
+};
 
 // Define the store using Zustand's create function
 const useOptionStore = create((set, get) => ({
@@ -56,6 +63,7 @@ const useOptionStore = create((set, get) => ({
   strikeCount: 5,
   isLoading: false,
   error: null,
+  oiData: initialOiData,
   marketConditions: {
     // Required in case of heston and NN model
     volatilityIndex: 18.5, // FIXME: Approximate VIX value for India
@@ -142,6 +150,8 @@ const useOptionStore = create((set, get) => ({
 
       const formattedData = formatOptionChainData(optionChainResponse.data);
       const closes = await fetchHistoricalCloses(symbol, PERIOD_DAYS);
+      const now = new Date();
+      const time = now.toTimeString().slice(0, 5); // "HH:MM" 
 
       // if (!expiry) expiry = formattedData.expiryDates[0];
       if (formattedData && optionChainResponse) {
@@ -290,11 +300,27 @@ const useOptionStore = create((set, get) => ({
             sortedEnhancedOptions
           );
 
+          const OIDataForIndex = extractChartDataFromEnhancedOptions(sortedEnhancedOptions, formattedData.underlying.ltp, time);
+
+        const prevOiData = get().oiData[symbol] || {};
+        // For each strike in OIDataForIndex, merge time entries
+        const mergedOiData = { ...prevOiData };
+        Object.entries(OIDataForIndex).forEach(([strike, timeObj]) => {
+          mergedOiData[strike] = {
+            ...(prevOiData[strike] || {}),
+            ...timeObj,
+          };
+        });
+
           set({
             enhancedOptions: sortedEnhancedOptions,
             tradingOpportunities: opportunities,
             atmPriceDetails: atmPriceDetails,
-            atmIndex
+            atmIndex,
+            oiData: {
+              ...get().oiData,
+              [symbol]: mergedOiData
+            }
           });
         }
 
@@ -303,6 +329,7 @@ const useOptionStore = create((set, get) => ({
           selectedRowStrikePrice: null,
           selectedOptionType: null,
         });
+
       }
 
       // Update store with fetched data
@@ -315,8 +342,6 @@ const useOptionStore = create((set, get) => ({
         selectedSymbol: symbol,
         isLoading: false,
       }));
-
-      // return mockData;
     } catch (error) {
       console.log('🚀 ~ fetchOptionChain: ~ expiryDates:', error);
       set({

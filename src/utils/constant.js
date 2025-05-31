@@ -31,3 +31,4 @@ export const availableOptions = [
   export const THRESHOLD_PERCENT = 5
   export const DAYS_IN_A_YEAR = 365
   export const WORK_DAYS_IN_A_YEAR = 252
+  export const LACS = 100000
